@@ -1,0 +1,242 @@
+package main
+
+import (
+	"autocall/api"
+	IRedis "autocall/internal/redis"
+	redis "autocall/internal/redis/driver"
+	sqlclient "autocall/internal/sql-client"
+	"autocall/service"
+	"io"
+	"os"
+	"path/filepath"
+
+	apiv1 "autocall/api/v1"
+	"autocall/repository"
+
+	"github.com/caarlos0/env"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
+	"gopkg.in/Graylog2/go-gelf.v2/gelf"
+)
+
+type Config struct {
+	Dir           string `env:"CONFIG_DIR" envDefault:"config/config.json"`
+	Port          string
+	RecordingHost string
+	RecordingDir  string
+	LogType       string
+	LogLevel      string
+	LogFile       string
+	LogAddr       string
+	DB            string
+	EventSocket   string
+	Redis         string
+	Auth          string
+	AuthUrl       string
+}
+
+type DBConfig struct {
+	Driver          string
+	Host            string
+	Port            string
+	Username        string
+	Password        string
+	Database        string
+	SSLMode         string
+	Timeout         int
+	MaxOpenConns    int
+	MaxIdleConns    int
+	MaxConnLifetime int
+}
+
+var config Config
+
+func init() {
+	if err := env.Parse(&config); err != nil {
+		log.Error("Get environment values fail")
+		log.Fatal(err)
+	}
+	viper.SetConfigFile(config.Dir)
+	if err := viper.ReadInConfig(); err != nil {
+		log.Println(err.Error())
+		panic(err)
+	}
+	cfg := Config{
+		Dir:           config.Dir,
+		RecordingHost: viper.GetString(`main.recording_host`),
+		RecordingDir:  viper.GetString(`main.recording_dir`),
+		Port:          viper.GetString(`main.port`),
+		LogType:       viper.GetString(`main.log_type`),
+		LogLevel:      viper.GetString(`main.log_level`),
+		LogFile:       viper.GetString(`main.log_file`),
+		LogAddr:       viper.GetString(`main.log_addr`),
+		DB:            viper.GetString(`main.db`),
+		EventSocket:   viper.GetString(`main.event_socket`),
+		Redis:         viper.GetString(`main.redis`),
+		Auth:          viper.GetString(`main.auth`),
+		AuthUrl:       viper.GetString(`main.auth_url`),
+	}
+	if cfg.DB == "enabled" {
+		switch viper.GetString(`db.driver`) {
+		case "postgresql":
+			// sqlClientConfig := sqlclient.SqlConfig{
+			// 	Driver:       "postgresql",
+			// 	Host:         viper.GetString(`db.host`),
+			// 	Database:     viper.GetString(`db.database`),
+			// 	Username:     viper.GetString(`db.username`),
+			// 	Password:     viper.GetString(`db.password`),
+			// 	Port:         viper.GetInt(`db.port`),
+			// 	DialTimeout:  20,
+			// 	ReadTimeout:  30,
+			// 	WriteTimeout: 30,
+			// 	Timeout:      30,
+			// 	PoolSize:     10,
+			// 	MaxIdleConns: 10,
+			// 	MaxOpenConns: 10,
+			// }
+			// repository.FusionSqlClient = sqlclient.NewSqlClient(sqlClientConfig)
+		case "mysql":
+			sqlClientConfig := sqlclient.SqlConfig{
+				Driver:       "mysql",
+				Host:         viper.GetString(`mysql.host`),
+				Database:     viper.GetString(`mysql.database`),
+				Username:     viper.GetString(`mysql.username`),
+				Password:     viper.GetString(`mysql.password`),
+				Port:         viper.GetInt(`mysql.port`),
+				DialTimeout:  20,
+				ReadTimeout:  30,
+				WriteTimeout: 30,
+				Timeout:      30,
+				PoolSize:     10,
+				MaxIdleConns: 10,
+				MaxOpenConns: 10,
+			}
+			repository.MySqlClient = sqlclient.NewSqlClient(sqlClientConfig)
+		}
+		switch viper.GetString(`fs_db.driver`) {
+		case "postgresql":
+			// sqlClientConfig := sqlclient.SqlConfig{
+			// 	Driver:       "postgresql",
+			// 	Host:         viper.GetString(`fs_db.host`),
+			// 	Database:     viper.GetString(`fs_db.database`),
+			// 	Username:     viper.GetString(`fs_db.username`),
+			// 	Password:     viper.GetString(`fs_db.password`),
+			// 	Port:         viper.GetInt(`fs_db.port`),
+			// 	DialTimeout:  20,
+			// 	ReadTimeout:  30,
+			// 	WriteTimeout: 30,
+			// 	Timeout:      30,
+			// 	PoolSize:     10,
+			// 	MaxIdleConns: 10,
+			// 	MaxOpenConns: 10,
+			// }
+			// repository.FreeswitchSqlClient = sqlclient.NewSqlClient(sqlClientConfig)
+		case "mysql":
+			sqlClientConfig := sqlclient.SqlConfig{
+				Driver:       "mysql",
+				Host:         viper.GetString(`fs_db.host`),
+				Database:     viper.GetString(`fs_db.database`),
+				Username:     viper.GetString(`fs_db.username`),
+				Password:     viper.GetString(`fs_db.password`),
+				Port:         viper.GetInt(`fs_db.port`),
+				DialTimeout:  20,
+				ReadTimeout:  30,
+				WriteTimeout: 30,
+				Timeout:      30,
+				PoolSize:     10,
+				MaxIdleConns: 10,
+				MaxOpenConns: 10,
+			}
+			repository.MySqlClient = sqlclient.NewSqlClient(sqlClientConfig)
+		}
+
+		// repository.UserRepo = db.NewUser()
+		// repository.DomainRepo = db.NewDomain()
+
+	}
+	if cfg.EventSocket == "enabled" {
+		// freeswitch.ESLClient = freeswitch.NewFreeswitchESL(freeswitch.FreeswitchESLConfig{
+		// 	Address:  viper.GetString(`event_socket.address`),
+		// 	Port:     viper.GetInt(`event_socket.port`),
+		// 	Password: viper.GetString(`event_socket.password`),
+		// 	Timeout:  viper.GetInt(`event_socket.timeout`),
+		// })
+		// if _, err := freeswitch.ESLClient.Connect(); err != nil {
+		// 	panic(err)
+		// }
+	}
+	if cfg.Redis == "enabled" {
+		var err error
+		IRedis.Redis, err = redis.NewRedis(redis.Config{
+			Addr:         viper.GetString(`redis.address`),
+			Password:     viper.GetString(`redis.password`),
+			DB:           viper.GetInt(`redis.database`),
+			PoolSize:     30,
+			PoolTimeout:  20,
+			IdleTimeout:  10,
+			ReadTimeout:  20,
+			WriteTimeout: 15,
+		})
+		if err != nil {
+			panic(err)
+		}
+	}
+	// switch cfg.Auth {
+	// case "oauth":
+	// 	auth.AuthUrl = cfg.AuthUrl
+	// }
+	config = cfg
+}
+
+func main() {
+	_ = os.Mkdir(filepath.Dir(config.LogFile), 0755)
+	file, _ := os.OpenFile(config.LogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	defer file.Close()
+	setAppLogger(config, file)
+	server := api.NewServer()
+
+	apiv1.NewContactCallHandler(server.Engine, service.NewContactService())
+
+	server.Start(config.Port)
+}
+
+func setAppLogger(cfg Config, file *os.File) {
+	// log.SetFormatter(&log.TextFormatter{
+	// 	FullTimestamp: true,
+	// })
+	// log.SetFormatter(&log.JSONFormatter{})
+	log.SetFormatter(&log.TextFormatter{})
+	switch cfg.LogLevel {
+	case "debug":
+		log.SetLevel(log.DebugLevel)
+	case "info":
+		log.SetLevel(log.InfoLevel)
+	case "error":
+		log.SetLevel(log.ErrorLevel)
+	case "warn":
+		log.SetLevel(log.WarnLevel)
+	default:
+		log.SetLevel(log.InfoLevel)
+	}
+	switch cfg.LogType {
+	case "DEFAULT":
+		log.SetOutput(os.Stdout)
+	case "GELF":
+		gelfWriter, err := gelf.NewUDPWriter(cfg.LogAddr)
+		if err != nil {
+			log.Error("main", "setAppLogger", err.Error())
+			log.SetOutput(io.MultiWriter(os.Stdout, file))
+		} else {
+			log.SetOutput(io.MultiWriter(os.Stdout, file, gelfWriter))
+		}
+	case "FILE":
+		if file != nil {
+			log.SetOutput(io.MultiWriter(os.Stdout, file))
+		} else {
+			log.Error("main ", "Log File "+cfg.LogFile+" error")
+			log.SetOutput(os.Stdout)
+		}
+	default:
+		log.SetOutput(os.Stdout)
+	}
+}

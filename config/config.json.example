@@ -1,0 +1,120 @@
+{
+    "main": {
+      "port": "8000",
+      "log_type": "GELF",
+      "log_level": "debug",
+      "log_file": "tmp/console.log",
+      "log_addr": "113.164.246.7:4001",
+      "storage": "remote",
+      "auth": "oauth",
+      "db": "enabled",
+      "tts": "enabled",
+      "sync": "enabled",
+      "elastic_search": "enabled",
+      "redis": "enabled",
+      "rabbitmq": "enabled",
+      "event_socket": "enabled",
+      "callback": "disabled",
+      "autocall": "enabled",
+      "crm": "enabled",
+      "sftp": "enabled",
+      "recording_host": "https://pitel02.tel4vn.com/app/xml_cdr/download.php?id=",
+      "recording_dir": "/usr/local/freeswitch/recordings",
+      "api_domain" : "https://apicrm.tel4vn.com",
+      "outbound_proxy": "pitel02.tel4vn.com:50061",
+      "wss": "wss://sbc03.tel4vn.com:7444",
+      "transport": "both",
+      "sip_port": "50061"
+    },
+    "oauth": {
+      "tokenType": "Bearer",
+      "expired_in": "15552000"
+    },
+    "event_socket": {
+      "address": "203.162.120.46",
+      "port": 8021,
+      "password": "ClueCon",
+      "timeout": 10
+    },
+    "redis": {
+      "address": "localhost:6379",
+      "port": "6379",
+      "database": 16,
+      "password": ""
+    },
+    "db": {
+        "driver": "postgre",
+        "host": "203.162.120.46",
+        "port": "5432",
+        "username": "fusionpbx",
+        "password": "LuYont4ZP5Y5Sem8aHfuwy8fJRYolrnD8zi1itbI",
+        "name": "fusionpbx",
+        "ssl_mode": "disable",
+        "timeout": 15,
+        "max_open_conns": 10,
+        "max_idle_conns": 3,
+        "conn_max_lifetime": 600
+    },
+    "mysql": {
+      "driver": "mysql",
+      "host": "113.164.246.11",
+      "port": "3306",
+      "username": "autocall",
+      "password": "Tel4vn.com##2022!!!",
+      "name": "",
+      "ssl_mode": "disable",
+      "timeout": 15,
+      "max_open_conns": 10,
+      "max_idle_conns": 3,
+      "conn_max_lifetime": 600
+    },
+    "fs_db": {
+      "driver": "postgre",
+      "host": "203.162.120.46",
+      "port": "5432",
+      "username": "fusionpbx",
+      "password": "LuYont4ZP5Y5Sem8aHfuwy8fJRYolrnD8zi1itbI",
+      "name": "freeswitch",
+      "ssl_mode": "disable",
+      "timeout": 15,
+      "max_open_conns": 10,
+      "max_idle_conns": 3,
+      "conn_max_lifetime": 600
+    },
+    "rabbitmq": {
+      "host": "amqp://tel4vn:tel4vn2020@113.164.246.4:5672"
+    },
+    "elastic_search": {
+      "host": "http://113.164.246.4:9200",
+      "username": "elastic",
+      "password": "tel4vnEs2021"
+    },
+    "local": {
+      "voiceDir": "/var/www/fusionpbx/dev/upload/autocall/sound",
+      "downloadVoiceDir": "/var/www/fusionpbx/dev/upload/autocall/sound",
+      "contactFileDir": "/var/www/fusionpbx/dev/upload/autocall/contacts",
+      "soundPath": "/var/www/fusionpbx/dev/download/sound",
+      "contactPath": "/var/www/fusionpbx/dev/download/contact",
+      "voiceTTSDir": "/var/www/fusionpbx/dev/upload/autocall/sound",
+      "voiceTTSMainPath": "ivr",
+      "voiceTTSTempPath": "ivr/temp",
+      "textVoicePath": "voice"
+    },
+    "remote": {
+      "voiceDir": "/var/www/SFTP/upload/autocall/sound",
+      "downloadVoiceDir": "upload/autocall/sound",
+      "contactFileDir": "upload/autocall/contacts",
+      "soundPath": "download/sound",
+      "contactPath": "download/contact",
+      "voiceTTSDir": "upload/autocall/sound",
+      "voiceTTSMainPath": "ivr",
+      "voiceTTSTempPath": "ivr/temp"
+    },
+    "sftp": {
+      "host": "203.162.120.46",
+      "port": 8822,
+      "username": "tel4vnsftp",
+      "password": "telsftp-TEL4VN@2021"
+    }
+  }
+  

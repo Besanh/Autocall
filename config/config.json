@@ -1,0 +1,34 @@
+{
+  "main": {
+      "port": "8000",
+      "log_type": "FILE",
+      "log_level": "debug",
+      "log_file": "tmp/console.log",
+      "log_addr": "127.0.0.1:4021",
+      "db": "enabled",
+      "callback": "enabled",
+      "redis": "enabled"
+  },
+  "db": {
+        "driver": "mysql",
+        "host": "113.164.246.11",
+        "port": "3306",
+        "username": "root",
+        "password": "Tel4vn.com##2022!!!",
+        "name": "cc_autocall",
+        "ssl_mode": "disable",
+        "timeout": 15,
+        "max_open_conns": 10,
+        "max_idle_conns": 3,
+        "conn_max_lifetime": 600
+  },
+  "redis": {
+      "address": "localhost:6379",
+      "databases": 16,
+      "password": ""
+  },
+  "oauth": {
+      "tokenType": "Bearer",
+      "expired_in": "15552000"
+  }
+}
