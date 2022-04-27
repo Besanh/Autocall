@@ -3,8 +3,12 @@ package main
 import (
 	"autocall/api"
 	apiv1 "autocall/api/v1"
+	commonAuth "autocall/common/auth"
+	IRedis "autocall/internal/redis"
+	redis "autocall/internal/redis/driver"
 	imysql "autocall/internal/sqldb/mysql"
 	mysql "autocall/internal/sqldb/mysql/driver"
+	"autocall/middleware/auth"
 	"autocall/service"
 	"io"
 	"os"
@@ -24,6 +28,9 @@ type Config struct {
 	LogFile  string
 	LogAddr  string
 	DB       string
+	Redis    string
+	Auth     string
+	AuthUrl  string
 	DBConfig
 }
 
@@ -61,6 +68,9 @@ func init() {
 		LogFile:  viper.GetString(`main.log_file`),
 		LogAddr:  viper.GetString(`main.log_addr`),
 		DB:       viper.GetString(`main.db`),
+		Redis:    viper.GetString(`main.redis`),
+		Auth:     viper.GetString(`main.oauth`),
+		AuthUrl:  viper.GetString(`main.auth_url`),
 	}
 	if cfg.DB == "enabled" {
 		cfg.DBConfig = DBConfig{
@@ -77,6 +87,30 @@ func init() {
 			MaxConnLifetime: viper.GetInt(`db.conn_max_lifetime`),
 		}
 	}
+	if cfg.Redis == "enabled" {
+		var err error
+		IRedis.Redis, err = redis.NewRedis(redis.Config{
+			Addr:         viper.GetString(`redis.address`),
+			Password:     viper.GetString(`redis.password`),
+			DB:           viper.GetInt(`redis.database`),
+			PoolSize:     30,
+			PoolTimeout:  20,
+			IdleTimeout:  10,
+			ReadTimeout:  20,
+			WriteTimeout: 15,
+		})
+		if err != nil {
+			panic(err)
+		}
+	}
+	switch cfg.Auth {
+	case "oauth":
+		auth.AuthUrl = cfg.AuthUrl
+	}
+	commonAuth.NewAuthUtil(commonAuth.Config{
+		ExpiredTime: viper.GetInt(`oauth.expired_in`),
+		TokenType:   viper.GetString(`oauth.tokenType`),
+	})
 	config = cfg
 }
 
@@ -102,6 +136,8 @@ func main() {
 
 	server := api.NewServer()
 
+	apiv1.NewAuthHandler(server.Engine, service.NewUserService())
+	apiv1.NewUserHandler(server.Engine, service.NewUserService())
 	apiv1.NewContactCallHandler(server.Engine, service.NewContactService())
 
 	server.Start(config.Port)

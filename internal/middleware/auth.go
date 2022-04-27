@@ -14,7 +14,7 @@ var (
 	AuthUrl string
 )
 
-type GoAuthUser struct {
+type AuthUser struct {
 	DomainId   string   `json:"domain_id"`
 	DomainName string   `json:"domain_name"`
 	Id         string   `json:"id"`
@@ -23,51 +23,51 @@ type GoAuthUser struct {
 	Scopes     []string `json:"scopes"`
 }
 
-func (a *GoAuthUser) SetDomainId(domainId string) {
+func (a *AuthUser) SetDomainId(domainId string) {
 	a.DomainId = domainId
 }
 
-func (a *GoAuthUser) GetDomainId() string {
+func (a *AuthUser) GetDomainId() string {
 	return a.DomainId
 }
 
-func (a *GoAuthUser) SetDomainName(domainName string) {
+func (a *AuthUser) SetDomainName(domainName string) {
 	a.DomainName = domainName
 }
 
-func (a *GoAuthUser) GetDomainName() string {
+func (a *AuthUser) GetDomainName() string {
 	return a.DomainName
 }
 
-func (a *GoAuthUser) SetId(id string) {
+func (a *AuthUser) SetId(id string) {
 	a.Id = id
 }
 
-func (a *GoAuthUser) GetId() string {
+func (a *AuthUser) GetId() string {
 	return a.Id
 }
 
-func (a *GoAuthUser) SetName(name string) {
+func (a *AuthUser) SetName(name string) {
 	a.Name = name
 }
 
-func (a *GoAuthUser) GetName() string {
+func (a *AuthUser) GetName() string {
 	return a.Name
 }
 
-func (a *GoAuthUser) SetLevel(level string) {
+func (a *AuthUser) SetLevel(level string) {
 	a.Level = level
 }
 
-func (a *GoAuthUser) GetLevel() string {
+func (a *AuthUser) GetLevel() string {
 	return a.Level
 }
 
-func (a *GoAuthUser) SetScopes(scopes []string) {
+func (a *AuthUser) SetScopes(scopes []string) {
 	a.Scopes = scopes
 }
 
-func (a *GoAuthUser) GetScopes() []string {
+func (a *AuthUser) GetScopes() []string {
 	return a.Scopes
 }
 
@@ -85,7 +85,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		GoAuthUser, err := PostToAuthAPI(token)
+		AuthUser, err := PostToAuthAPI(token)
 		if err != nil {
 			log.Error("AuthMiddleware", "validateBasicAuth", err.Error())
 			c.JSON(
@@ -97,7 +97,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		c.Set("user", GoAuthUser)
+		c.Set("user", AuthUser)
 	}
 }
 
@@ -117,11 +117,12 @@ func CheckAdmin() gin.HandlerFunc {
 	}
 }
 
-func PostToAuthAPI(token string) (*GoAuthUser, error) {
+func PostToAuthAPI(token string) (*AuthUser, error) {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 	req, err := http.NewRequest("POST", AuthUrl, nil)
+	log.Info("go", "go", AuthUrl)
 	if err != nil {
 		log.Error("Auth", "PostToAuthAPI", err)
 		return nil, err
@@ -139,20 +140,20 @@ func PostToAuthAPI(token string) (*GoAuthUser, error) {
 	}
 	defer res.Body.Close()
 	log.Info("Auth", "PostToAuthAPI", res.StatusCode)
-	GoAuthUser := new(GoAuthUser)
+	AuthUser := new(AuthUser)
 
-	err = json.NewDecoder(res.Body).Decode(GoAuthUser)
+	err = json.NewDecoder(res.Body).Decode(AuthUser)
 	if err != nil {
 		log.Error("Auth", "PostToAuthAPI", err)
 		return nil, err
 	}
-	return GoAuthUser, nil
+	return AuthUser, nil
 }
 
-func GetUser(c *gin.Context) (*GoAuthUser, bool) {
+func GetUser(c *gin.Context) (*AuthUser, bool) {
 	tmp, isExist := c.Get("user")
 	if isExist {
-		user, ok := tmp.(*GoAuthUser)
+		user, ok := tmp.(*AuthUser)
 		return user, ok
 	} else {
 		return nil, false

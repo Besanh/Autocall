@@ -4,6 +4,7 @@ import (
 	"autocall/common/log"
 	authMdw "autocall/middleware/auth"
 	"autocall/service"
+	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -20,7 +21,8 @@ func NewUserHandler(r *gin.Engine, user service.IUserService) {
 
 	Group := r.Group("v1/user")
 	{
-		Group.GET("/:groupID/:limit/:offset", authMdw.AuthMiddleware(), authMdw.CheckAdmin(), handler.GetUserInGroup)
+		Group.GET("user-in-group/:groupID", authMdw.AuthMiddleware(), authMdw.CheckAdmin(), handler.GetUserInGroup)
+
 	}
 }
 
@@ -31,11 +33,13 @@ func (data *UserHandler) GetUserInGroup(c *gin.Context) {
 	limitInt, err := strconv.Atoi(limit)
 	if err != nil {
 		log.Error("UserHandler", "GetUserInGroup - error", "limit is null or fail")
+		c.JSON(http.StatusNotFound, err)
 		return
 	}
 	offsetInt, err := strconv.Atoi(offset)
 	if err != nil {
 		log.Error("UserHandler", "GetUserInGroup - error", "offset is null or fail")
+		c.JSON(http.StatusNotFound, err)
 		return
 	}
 	code, result := data.UserService.GetUserInGroup(groupID, limitInt, offsetInt)

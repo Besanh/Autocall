@@ -8,7 +8,6 @@ import (
 	"autocall/repository"
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -31,7 +30,6 @@ func NewUserService() IUserService {
 func (data *UserService) CreateUser(entry model.User) (int, interface{}) {
 	log.Info("UserService", "Auth", entry)
 	entry.APIKey = uuid.NewString()
-	entry.CreatedAt = time.Now()
 	entry.Password, _ = encryptUtil.GenerateEncrypted(entry.Password)
 
 	result, err := data.repo.CreateUser(entry)
@@ -53,10 +51,10 @@ func (data *UserService) GenerateTokenByApiKey(apiKey string, isRefresh bool) (i
 		return http.StatusNotFound, errors.New("User is null")
 	}
 	user := resp.(model.User)
-	log.Info("UserService", "GenerateTokenByApiKey - user", user)
 	clientAuth := auth.AuthClient{
 		ClientID:     apiKey,
 		ClientSecret: apiKey,
+		UserId:       user.ID,
 		User:         user,
 	}
 	token, err := auth.ClientCredential(clientAuth, isRefresh)

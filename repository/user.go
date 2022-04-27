@@ -27,10 +27,17 @@ func (repo *User) CreateUser(entry model.User) (interface{}, error) {
 	return entry, nil
 }
 
+/**
+* @return table@user, group_id
+ */
 func (repo *User) GetUserByApiKey(apiKey string) (interface{}, error) {
 	log.Info("UserRepository", "GetUserByApiKey", apiKey)
 	var user model.User
-	err := IMySql.MySqlConnector.GetConn().Model(&model.User{}).Where("api_key = ?", apiKey).First(&user).Error
+	err := IMySql.MySqlConnector.GetConn().Model(&model.User{}).
+		Joins("INNER JOIN group_user ON group_user.user_id=user.id").
+		Where("api_key = ?", apiKey).
+		Select("user.id, user.username, user.email, user.level, user.api_key, group_user.group_id").
+		First(&user).Error
 	if err != nil {
 		log.Error("UserRepository", "GetUserByApiKey - error", err)
 		return nil, err

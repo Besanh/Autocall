@@ -59,6 +59,7 @@ func CheckAccessTokenCache(client AuthClient) (model.AccessToken, error) {
 
 	log.Info("Auth Middleware", "CheckAccessTokenCache - clientID", client.ClientID)
 	accessTokenRes, err := repository.AuthRepo.GetAccessTokenFromCache(client.ClientID)
+	log.Info("go", "go", accessTokenRes)
 	if err != nil {
 		log.Error("Auth Middleware", "CheckAccessTokenCache - GetAccessTokenFromCache", err)
 		return accessToken, err
@@ -72,7 +73,7 @@ func CheckAccessTokenCache(client AuthClient) (model.AccessToken, error) {
 		}
 	}
 
-	if accessToken.ClienID == "" {
+	if accessToken.ClientID == "" {
 		accessToken = CreateAccessToken(client)
 		log.Info("Auth Middleware", "CheckAccessTokenCache - CreateAccessToken", accessToken)
 		err := repository.AuthRepo.InsertAccessTokenCache(accessToken)
@@ -169,7 +170,7 @@ func GenerateRefreshToken(id string) string {
 //CreateAccessToken -CreateAccessToken
 func CreateAccessToken(client AuthClient) model.AccessToken {
 	accesstoken := model.AccessToken{
-		ClienID:      client.ClientID,
+		ClientID:     client.ClientID,
 		UserID:       client.UserId,
 		Token:        GenerateToken(client.ClientID),
 		RefreshToken: GenerateRefreshToken(client.ClientID),
@@ -179,9 +180,8 @@ func CreateAccessToken(client AuthClient) model.AccessToken {
 		TokenType:    AuthConfig.TokenType,
 	}
 	jwtData := make(map[string]string)
-	jwtData["username"] = client.User.UserName
+	jwtData["username"] = client.User.Username
 	jwtData["level"] = client.User.Level
-	jwtData["group_id"] = client.User.GroupID
 	accesstoken.JWT = GenerateJWT(client.UserId, jwtData)
 	return accesstoken
 }

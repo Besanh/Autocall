@@ -2,3 +2,8 @@
 https://developpaper.com/an-example-of-using-go-xorm-to-manipulate-mysql/
 - Redis cli:
 https://lightrun.com/dev-tools/using-the-redis-command-line/
+
+
+- Flow:
+auth lay api_key trong table user truyen vao GenerateToken
+UserName => go se bind thanh user_name

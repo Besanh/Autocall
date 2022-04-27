@@ -9,16 +9,23 @@ import (
 const redisAccessTokenUser = "access_token_user"
 const redisAccessTokenKey = "access_token_key"
 
-type AuthRepository struct {
+type (
+	IAuth interface {
+		GetAccessTokenFromCache(clientId string) (interface{}, error)
+		InsertAccessTokenCache(token model.AccessToken) error
+		DeleteAccessTokenCache(token model.AccessToken) error
+		GetAuthenFromCache(token string) (interface{}, error)
+	}
+	Auth struct{}
+)
+
+var AuthRepo Auth
+
+func NewAuthRepository() Auth {
+	return Auth{}
 }
 
-func NewAuthRepository() AuthRepository {
-	return AuthRepository{}
-}
-
-var AuthRepo AuthRepository
-
-func (repo *AuthRepository) GetAccessTokenFromCache(clientId string) (interface{}, error) {
+func (repo *Auth) GetAccessTokenFromCache(clientId string) (interface{}, error) {
 	res, err := IRedis.Redis.HMGet(redisAccessTokenUser, clientId)
 	if err != nil {
 		return nil, err
@@ -38,8 +45,8 @@ func (repo *AuthRepository) GetAccessTokenFromCache(clientId string) (interface{
 	}
 }
 
-func (repo *AuthRepository) InsertAccessTokenCache(token model.AccessToken) error {
-	clientId := token.ClienID
+func (repo *Auth) InsertAccessTokenCache(token model.AccessToken) error {
+	clientId := token.ClientID
 	accessToken := token.Token
 	jsonEncodeToken, err := json.Marshal(token)
 	if err != nil {
@@ -59,8 +66,8 @@ func (repo *AuthRepository) InsertAccessTokenCache(token model.AccessToken) erro
 	return err
 }
 
-func (repo *AuthRepository) DeleteAccessTokenCache(token model.AccessToken) error {
-	clientId := token.ClienID
+func (repo *Auth) DeleteAccessTokenCache(token model.AccessToken) error {
+	clientId := token.ClientID
 	accessToken := token.Token
 	err := IRedis.Redis.HMDel(redisAccessTokenUser, clientId)
 	if err != nil {
@@ -73,7 +80,7 @@ func (repo *AuthRepository) DeleteAccessTokenCache(token model.AccessToken) erro
 	return err
 }
 
-func (repo *AuthRepository) GetAuthenFromCache(token string) (interface{}, error) {
+func (repo *Auth) GetAuthenFromCache(token string) (interface{}, error) {
 	res, err := IRedis.Redis.HMGet(redisAccessTokenKey, token)
 	if err != nil {
 		return nil, err
